@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Screen Recorder</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- App Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="status-dot idle" id="status-dot"></div>
+        <h1>REC<span>FLOW</span></h1>
+      </div>
+      
+      <div class="output-folder-container">
+        <span class="label">Save Folder:</span>
+        <div class="path-display" id="path-display">C:\Users\...\Videos</div>
+        <button class="btn-icon" id="btn-select-folder" title="Change Save Location">
+          <svg viewBox="0 0 24 24" class="svg-icon"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="app-body">
+      
+      <!-- Left Panel: Control Dashboard -->
+      <section class="control-panel">
+        
+        <!-- Grid of Capture Switches -->
+        <div class="settings-grid">
+          
+          <!-- Screen Capture Card -->
+          <div class="control-card active" id="card-screen">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" class="svg-icon"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
+                Screen Capture
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-screen" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="card-body">
+              <div class="selected-source-preview" id="selected-source-preview">
+                <div class="no-source">No Screen Selected</div>
+              </div>
+              <button class="btn-primary-glow btn-sm" id="btn-select-source">
+                Choose Screen / Window
+              </button>
+            </div>
+          </div>
+
+          <!-- Camera Capture Card -->
+          <div class="control-card" id="card-camera">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" class="svg-icon"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z"/></svg>
+                Webcam Overlay
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-camera">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="card-body">
+              <select class="custom-select" id="select-camera" disabled>
+                <option value="">Select Camera...</option>
+              </select>
+              
+              <!-- Webcam Live UI Preview -->
+              <div class="webcam-ui-preview-container" id="webcam-ui-preview-container" style="display: none;">
+                <video id="webcam-ui-preview" autoplay playsinline muted></video>
+                <div class="preview-overlay-text">Camera Active</div>
+              </div>
+              
+              <!-- Webcam Layout Configuration -->
+              <div class="webcam-config-drawer" id="webcam-config-drawer" style="display: none;">
+                <div class="config-row">
+                  <span class="config-label">Shape</span>
+                  <div class="segmented-control">
+                    <button class="segment-btn active" id="shape-circle">Circle</button>
+                    <button class="segment-btn" id="shape-rect">Square</button>
+                  </div>
+                </div>
+                
+                <div class="config-row">
+                  <span class="config-label">Position</span>
+                  <div class="position-grid">
+                    <button class="pos-btn" id="pos-tl" title="Top Left"></button>
+                    <button class="pos-btn" id="pos-tr" title="Top Right"></button>
+                    <button class="pos-btn" id="pos-bl" title="Bottom Left"></button>
+                    <button class="pos-btn active" id="pos-br" title="Bottom Right"></button>
+                  </div>
+                </div>
+
+                <div class="config-row">
+                  <span class="config-label">Size</span>
+                  <div class="range-container">
+                    <input type="range" id="webcam-size" min="10" max="30" value="18" step="1">
+                    <span class="range-val" id="webcam-size-val">18%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mic Audio Card -->
+          <div class="control-card active" id="card-mic">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" class="svg-icon"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                Microphone
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-mic" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="card-body">
+              <select class="custom-select" id="select-mic">
+                <option value="">Select Microphone...</option>
+              </select>
+              
+              <div class="audio-controls" id="mic-audio-controls">
+                <div class="mixer-row">
+                  <span class="slider-label">Volume</span>
+                  <input type="range" class="volume-slider" id="volume-mic" min="0" max="100" value="80">
+                  <span class="volume-val" id="volume-mic-val">80%</span>
+                </div>
+                <!-- VU Level Meter -->
+                <div class="vu-meter">
+                  <div class="vu-fill" id="vu-mic"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Audio Card -->
+          <div class="control-card active" id="card-system-audio">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" class="svg-icon"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 1.38-1.12 2.5-2.5 2.5S10 13.88 10 12.5s1.12-2.5 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>
+                System Audio
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-system-audio" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="card-body">
+              <div class="info-note">Captures computer sounds, game audio, YouTube etc.</div>
+              
+              <div class="audio-controls" id="system-audio-controls">
+                <div class="mixer-row">
+                  <span class="slider-label">Volume</span>
+                  <input type="range" class="volume-slider" id="volume-system" min="0" max="100" value="70">
+                  <span class="volume-val" id="volume-system-val">70%</span>
+                </div>
+                <!-- VU Level Meter -->
+                <div class="vu-meter">
+                  <div class="vu-fill" id="vu-system"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Master Trigger Panel -->
+        <div class="trigger-panel">
+          <div class="action-buttons">
+            <button class="btn-trigger" id="btn-record">
+              <div class="pulse-ring"></div>
+              <span id="btn-record-text">START RECORDING</span>
+            </button>
+            
+            <button class="btn-secondary" id="btn-pause" style="display: none;">
+              PAUSE
+            </button>
+          </div>
+          
+          <div class="recording-stats-container" id="recording-stats-container" style="display: none;">
+            <div class="stat-badge recording-badge">
+              <span class="badge-dot"></span> RECORDING
+            </div>
+            <div class="stat-badge timer-badge" id="recording-timer">00:00:00</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Panel: Recording Library -->
+      <section class="library-panel">
+        <div class="panel-header">
+          <h2>Recent Recordings</h2>
+          <span class="count-badge" id="library-count">0</span>
+        </div>
+        
+        <div class="library-list" id="library-list">
+          <!-- Empty State -->
+          <div class="library-empty" id="library-empty">
+            <svg viewBox="0 0 24 24" class="svg-icon-lg"><path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V8h14v10zm-2-9H7v2h10V9zm-4 4H7v2h6v-2z"/></svg>
+            <p>No local recordings yet.</p>
+            <p class="sub">Configure your sources and click start to record!</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- hidden video tags & canvas for processing -->
+  <div style="display: none;">
+    <video id="screen-video-element" autoplay playsinline></video>
+    <video id="camera-video-element" autoplay playsinline muted></video>
+    <canvas id="mixer-canvas" width="1920" height="1080"></canvas>
+  </div>
+
+  <!-- Countdown Overlay -->
+  <div class="countdown-overlay" id="countdown-overlay" style="display: none;">
+    <div class="countdown-number" id="countdown-number">5</div>
+    <div class="countdown-sub">Get Ready...</div>
+  </div>
+
+  <!-- Screen Selection Modal -->
+  <div class="modal-overlay" id="modal-select-source" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Choose Record Source</h3>
+        <button class="btn-close" id="modal-btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="source-tabs">
+          <button class="tab-btn active" id="tab-screens">Screens</button>
+          <button class="tab-btn" id="tab-windows">Windows</button>
+        </div>
+        <div class="sources-grid" id="sources-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Playback Modal -->
+  <div class="modal-overlay" id="modal-player" style="display: none;">
+    <div class="modal-box player-box">
+      <div class="modal-header">
+        <h3 id="player-title">Recording Preview</h3>
+        <button class="btn-close" id="player-btn-close">&times;</button>
+      </div>
+      <div class="modal-body player-body">
+        <video id="preview-video" controls autoplay></video>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

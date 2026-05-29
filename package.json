@@ -1,0 +1,48 @@
+{
+  "name": "local-screen-recorder",
+  "version": "1.0.0",
+  "description": "A premium, completely local desktop screen recording application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager . \"Local Screen Recorder\" --platform=win32 --arch=x64 --out=dist --overwrite",
+    "zip": "powershell \"Compress-Archive -Path 'dist/Local Screen Recorder-win32-x64' -DestinationPath 'dist/Local-Screen-Recorder.zip' -Force\"",
+    "dist": "electron-builder --win"
+  },
+  "keywords": [
+    "screen-recorder",
+    "local",
+    "electron"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.1",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.local.screenrecorder",
+    "productName": "Local Screen Recorder",
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Local Screen Recorder"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "renderer.js",
+      "styles.css"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
