@@ -22,6 +22,7 @@ function createWindow() {
     frame: true
   });
 
+  mainWindow.maximize();
   mainWindow.loadFile('index.html');
   
   // Open devtools in development if needed
