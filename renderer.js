@@ -108,6 +108,7 @@ let recordTimerInterval = null;
 let recordingElapsedMs = 0;
 let isRecording = false;
 let isPaused = false;
+let activeChunkWrites = 0;
 let canvasAnimFrame = null;
 let sourceSources = []; // Store fetched desktop sources
 let currentTab = 'screens'; // 'screens' or 'windows'
@@ -886,13 +887,20 @@ async function startRecording() {
     
     mediaRecorder.ondataavailable = async (event) => {
       if (event.data && event.data.size > 0) {
-        const arrayBuffer = await event.data.arrayBuffer();
-        window.api.appendRecordingChunk({ chunkArrayBuffer: arrayBuffer });
+        activeChunkWrites++;
+        try {
+          const arrayBuffer = await event.data.arrayBuffer();
+          await window.api.appendRecordingChunk({ chunkArrayBuffer: arrayBuffer });
+        } catch (err) {
+          console.error('Error writing chunk:', err);
+        } finally {
+          activeChunkWrites--;
+        }
       }
     };
     
     mediaRecorder.onstop = async () => {
-      console.log('MediaRecorder stopped.');
+      console.log('MediaRecorder stopped. Finalizing active chunk writes...');
       
       // Stop canvas loop
       cancelAnimationFrame(canvasAnimFrame);
@@ -915,6 +923,11 @@ async function startRecording() {
       if (audioContext) {
         audioContext.close();
         audioContext = null;
+      }
+      
+      // Wait for all outstanding chunk writes to fully write to disk first
+      while (activeChunkWrites > 0) {
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       
       // Finalize file
