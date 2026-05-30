@@ -860,9 +860,37 @@ async function startRecording() {
       recordStream.addTrack(mixedAudioTrack);
     }
     
-    // 6. Setup local file stream via IPC
+    // 6. Determine supported mimeType and appropriate file extension for recording
+    const candidates = [
+      'video/mp4;codecs=h264,aac',
+      'video/mp4;codecs=h264,opus',
+      'video/mp4;codecs=h264',
+      'video/mp4',
+      'video/webm;codecs=h264,opus',
+      'video/webm;codecs=h264',
+      'video/webm;codecs=vp9,opus',
+      'video/webm'
+    ];
+    
+    let selectedMimeType = '';
+    for (const candidate of candidates) {
+      if (MediaRecorder.isTypeSupported(candidate)) {
+        selectedMimeType = candidate;
+        break;
+      }
+    }
+    
+    if (!selectedMimeType) {
+      selectedMimeType = 'video/webm';
+    }
+    
+    let ext = 'webm';
+    if (selectedMimeType.startsWith('video/mp4')) {
+      ext = 'mp4';
+    }
+    
     const timestampStr = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `RecFlow-${timestampStr}.webm`;
+    const filename = `RecFlow-${timestampStr}.${ext}`;
     
     const fileResult = await window.api.startRecordingFile({
       folderPath: saveDirectory,
@@ -873,17 +901,9 @@ async function startRecording() {
       throw new Error(`Failed to initialize local file: ${fileResult.error}`);
     }
     
-    // 7. Initialize and start MediaRecorder
-    let options = { mimeType: 'video/webm;codecs=vp9,opus' };
-    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-      options = { mimeType: 'video/webm;codecs=h264,opus' };
-    }
-    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-      options = { mimeType: 'video/webm' };
-    }
-    
-    console.log(`Starting MediaRecorder with mimeType: ${options.mimeType}`);
-    mediaRecorder = new MediaRecorder(recordStream, options);
+    // 7. Initialize and start MediaRecorder with optimal mimeType
+    console.log(`Starting MediaRecorder with mimeType: ${selectedMimeType}`);
+    mediaRecorder = new MediaRecorder(recordStream, { mimeType: selectedMimeType });
     
     mediaRecorder.ondataavailable = async (event) => {
       if (event.data && event.data.size > 0) {
@@ -1051,7 +1071,7 @@ function startCanvasMixingLoop() {
     if (!isRecording) return;
     
     // 1. Draw Screen (Background layer)
-    if (toggleScreen.checked && screenVideoEl.readyState === screenVideoEl.HAVE_ENOUGH_DATA) {
+    if (toggleScreen.checked && screenVideoEl.readyState >= 2) {
       mixerCtx.drawImage(screenVideoEl, 0, 0, 1920, 1080);
     } else {
       // Dark space background if screen capture is toggled off
@@ -1060,7 +1080,7 @@ function startCanvasMixingLoop() {
     }
     
     // 2. Draw Webcam Overlay (Floating Layer)
-    if (toggleCamera.checked && cameraVideoEl.readyState === cameraVideoEl.HAVE_ENOUGH_DATA) {
+    if (toggleCamera.checked && cameraVideoEl.readyState >= 2) {
       // Calculate dimension size based on percentage scale
       const overlayWidth = 1920 * (webcamSizePct / 100);
       const overlayHeight = overlayWidth * (3/4); // 4:3 camera stream aspect ratio

@@ -226,8 +226,8 @@
 
   </div>
 
-  <!-- hidden video tags & canvas for processing -->
-  <div style="display: none;">
+  <!-- off-screen rendering container for processing (prevents Chromium frame decoding throttling) -->
+  <div style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none;">
     <video id="screen-video-element" autoplay playsinline muted></video>
     <video id="camera-video-element" autoplay playsinline muted></video>
     <canvas id="mixer-canvas" width="1920" height="1080"></canvas>
