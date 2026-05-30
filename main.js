@@ -17,6 +17,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      backgroundThrottling: false
     },
     // We keep standard frame for ease of window dragging and snapping, but we can style the client area exquisitely
     frame: true

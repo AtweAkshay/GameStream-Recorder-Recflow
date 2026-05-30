@@ -110,7 +110,7 @@ let recordingElapsedMs = 0;
 let isRecording = false;
 let isPaused = false;
 let activeChunkWrites = 0;
-let canvasAnimFrame = null;
+let canvasInterval = null;
 let sourceSources = []; // Store fetched desktop sources
 let currentTab = 'screens'; // 'screens' or 'windows'
 let recordingHistory = [];
@@ -965,7 +965,10 @@ async function startRecording() {
       console.log('MediaRecorder stopped. Finalizing active chunk writes...');
       
       // Stop canvas loop
-      cancelAnimationFrame(canvasAnimFrame);
+      if (canvasInterval) {
+        clearInterval(canvasInterval);
+        canvasInterval = null;
+      }
       
       // Stop all capturing streams
       if (screenStream) {
@@ -1107,7 +1110,10 @@ function resetUIOnFailure() {
   }
   if (recordTimerInterval) clearInterval(recordTimerInterval);
   if (vuMeterInterval) clearInterval(vuMeterInterval);
-  cancelAnimationFrame(canvasAnimFrame);
+  if (canvasInterval) {
+    clearInterval(canvasInterval);
+    canvasInterval = null;
+  }
 }
 
 // --- CANVAS MIXING ENGINE ---
@@ -1116,8 +1122,16 @@ function startCanvasMixingLoop() {
   mixerCanvas.width = 1920;
   mixerCanvas.height = 1080;
   
-  function drawFrame() {
-    if (!isRecording) return;
+  if (canvasInterval) {
+    clearInterval(canvasInterval);
+  }
+  
+  canvasInterval = setInterval(() => {
+    if (!isRecording) {
+      clearInterval(canvasInterval);
+      canvasInterval = null;
+      return;
+    }
     
     // 1. Draw Screen (Background layer)
     if (toggleScreen.checked && screenVideoEl.readyState >= 2) {
@@ -1217,11 +1231,7 @@ function startCanvasMixingLoop() {
         mixerCtx.restore();
       }
     }
-    
-    canvasAnimFrame = requestAnimationFrame(drawFrame);
-  }
-  
-  canvasAnimFrame = requestAnimationFrame(drawFrame);
+  }, 1000 / 60); // precision 60 FPS interval
 }
 
 // --- VU LEVEL METERS LOGIC ---
