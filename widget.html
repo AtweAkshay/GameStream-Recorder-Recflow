@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RecFlow Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: rgba(10, 10, 15, 0.85);
+      --border-color: rgba(168, 85, 247, 0.35); /* Glowing Neon Purple */
+      --color-red: #ef4444;
+      --color-cyan: #06b6d4;
+      --color-text: #f3f4f6;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    
+    body {
+      background: transparent;
+      font-family: 'Outfit', sans-serif;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    
+    /* Sleek Glassmorphic Draggable Control Pill */
+    .widget-container {
+      width: 190px;
+      height: 44px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(168, 85, 247, 0.15);
+      backdrop-filter: blur(12px);
+      -webkit-app-region: drag; /* Makes the entire widget draggable on the desktop! */
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .widget-container:hover {
+      border-color: rgba(168, 85, 247, 0.6);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(168, 85, 247, 0.25);
+    }
+    
+    /* Monospaced Glowing Digital Timer */
+    .timer-display {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--color-text);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 4px rgba(243, 244, 246, 0.5);
+    }
+    
+    /* Control Buttons */
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      -webkit-app-region: no-drag; /* Exclude buttons from drag so they remain clickable */
+    }
+    
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--color-text);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .btn-pause {
+      border-color: rgba(6, 182, 212, 0.3);
+      color: var(--color-cyan);
+    }
+    
+    .btn-pause:hover {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--color-cyan);
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+    }
+    
+    .btn-stop {
+      border-color: rgba(239, 68, 68, 0.3);
+      color: var(--color-red);
+    }
+    
+    .btn-stop:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--color-red);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+      animation: pulse-border 1.5s infinite;
+    }
+    
+    .svg-icon {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+    
+    @keyframes pulse-border {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="widget-container">
+    <div class="timer-display" id="widget-timer">00:00:00</div>
+    <div class="btn-group">
+      <!-- Pause / Resume Toggle -->
+      <button class="btn btn-pause" id="btn-widget-pause" title="Pause/Resume Recording">
+        <svg viewBox="0 0 24 24" class="svg-icon" id="pause-icon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+      <!-- Stop -->
+      <button class="btn btn-stop" id="btn-widget-stop" title="Stop Recording">
+        <svg viewBox="0 0 24 24" class="svg-icon"><path d="M6 6h12v12H6z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="widget.js"></script>
+</body>
+</html>

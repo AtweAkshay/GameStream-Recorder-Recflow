@@ -14,5 +14,14 @@ contextBridge.exposeInMainWorld('api', {
   deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
   
   getRecordingHistory: () => ipcRenderer.invoke('get-recording-history'),
-  saveRecordingHistory: (historyList) => ipcRenderer.invoke('save-recording-history', historyList)
+  saveRecordingHistory: (historyList) => ipcRenderer.invoke('save-recording-history', historyList),
+  
+  // Floating Recording Control Widget APIs
+  showRecordingWidget: () => ipcRenderer.invoke('show-recording-widget'),
+  hideRecordingWidget: () => ipcRenderer.invoke('hide-recording-widget'),
+  updateWidgetTimer: (timeStr) => ipcRenderer.invoke('update-widget-timer', timeStr),
+  updateWidgetState: (state) => ipcRenderer.invoke('update-widget-state', state),
+  
+  onStopFromWidget: (callback) => ipcRenderer.on('stop-recording-from-widget', (event, data) => callback(data)),
+  onPauseFromWidget: (callback) => ipcRenderer.on('pause-recording-from-widget', (event, data) => callback(data))
 });

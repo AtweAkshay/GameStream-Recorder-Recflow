@@ -1113,6 +1113,25 @@ body {
   border: 1px solid var(--border-hover);
   box-shadow: 0 0 10px rgba(168, 85, 247, 0.15);
   margin-top: 8px;
+  transition: all 0.3s ease;
+}
+
+.webcam-ui-preview-container.shape-circle {
+  border-radius: 50%;
+  aspect-ratio: 1/1; /* 1:1 perfect circle */
+  max-width: 150px;
+  margin: 12px auto 4px auto;
+  border-color: var(--color-purple);
+  box-shadow: 0 0 15px var(--color-purple-glow);
+}
+
+.webcam-ui-preview-container.shape-rect {
+  border-radius: 12px;
+  aspect-ratio: 4/3; /* 4:3 rounded square layout */
+  max-width: 200px;
+  margin: 12px auto 4px auto;
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 15px var(--color-cyan-glow);
 }
 
 .webcam-ui-preview-container video {

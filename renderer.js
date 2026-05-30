@@ -336,6 +336,7 @@ function registerEventListeners() {
   
   modalBtnClose.addEventListener('click', () => {
     modalSelectSource.style.display = 'none';
+    resumeAllActiveStreams();
   });
   
   tabScreens.addEventListener('click', () => {
@@ -414,12 +415,14 @@ function registerEventListeners() {
     webcamShape = 'circle';
     shapeCircleBtn.classList.add('active');
     shapeRectBtn.classList.remove('active');
+    updateWebcamUiPreviewStyle();
   });
   
   shapeRectBtn.addEventListener('click', () => {
     webcamShape = 'rect';
     shapeRectBtn.classList.add('active');
     shapeCircleBtn.classList.remove('active');
+    updateWebcamUiPreviewStyle();
   });
   
   const posBtns = [posTlBtn, posTrBtn, posBlBtn, posBrBtn];
@@ -481,6 +484,23 @@ function registerEventListeners() {
     modalPlayer.style.display = 'none';
     previewVideo.src = ''; // stop playing
   });
+
+  // Listen for widget control events
+  window.api.onStopFromWidget(() => {
+    console.log('Stop recording triggered from floating widget.');
+    stopRecording();
+  });
+  
+  window.api.onPauseFromWidget(() => {
+    console.log('Pause/Resume recording toggled from floating widget.');
+    if (isRecording) {
+      if (!isPaused) {
+        pauseRecording();
+      } else {
+        resumeRecording();
+      }
+    }
+  });
 }
 
 // --- WEBCAM PREVIEW UTILS ---
@@ -508,6 +528,7 @@ async function startWebcamPreview() {
     // Bind to visible UI preview
     if (webcamUiPreviewContainer && webcamUiPreviewEl) {
       webcamUiPreviewContainer.style.display = 'block';
+      updateWebcamUiPreviewStyle(); // Apply the correct live preview crop!
       webcamUiPreviewEl.srcObject = cameraStream;
       webcamUiPreviewEl.play().catch(e => console.warn('UI Webcam preview autoplay block:', e));
     }
@@ -575,6 +596,7 @@ function renderSourcesGrid() {
     item.addEventListener('click', () => {
       selectSource(source.id, source.name, source.thumbnail);
       modalSelectSource.style.display = 'none';
+      resumeAllActiveStreams();
     });
     
     sourcesGrid.appendChild(item);
@@ -964,6 +986,9 @@ async function startRecording() {
     mediaRecorder.onstop = async () => {
       console.log('MediaRecorder stopped. Finalizing active chunk writes...');
       
+      // Hide floating recording pill overlay widget
+      window.api.hideRecordingWidget();
+      
       // Stop canvas loop
       if (canvasInterval) {
         clearInterval(canvasInterval);
@@ -1043,6 +1068,10 @@ async function startRecording() {
     // Trigger recording chunk collection every 2 seconds (safe incremental buffer saving)
     mediaRecorder.start(2000);
     
+    // Show floating recording pill control widget
+    window.api.showRecordingWidget();
+    window.api.updateWidgetState('recording');
+    
     // Start timers and audio VUs
     recordStartTime = Date.now();
     recordingElapsedMs = 0;
@@ -1050,7 +1079,9 @@ async function startRecording() {
     recordTimerInterval = setInterval(() => {
       if (!isPaused) {
         recordingElapsedMs += 1000;
-        recordingTimer.textContent = formatMs(recordingElapsedMs);
+        const timeStr = formatMs(recordingElapsedMs);
+        recordingTimer.textContent = timeStr;
+        window.api.updateWidgetTimer(timeStr); // Sync floating pill timer!
       }
     }, 1000);
     
@@ -1069,6 +1100,7 @@ function pauseRecording() {
     isPaused = true;
     btnPause.textContent = 'RESUME';
     statusDot.className = 'status-dot idle'; // stop pulsing red
+    window.api.updateWidgetState('paused'); // Sync floating widget state!
   }
 }
 
@@ -1078,6 +1110,7 @@ function resumeRecording() {
     isPaused = false;
     btnPause.textContent = 'PAUSE';
     statusDot.className = 'status-dot recording';
+    window.api.updateWidgetState('recording'); // Sync floating widget state!
   }
 }
 
@@ -1108,11 +1141,37 @@ function resetUIOnFailure() {
   if (sourceOverlayLabel) {
     sourceOverlayLabel.style.display = 'block';
   }
+  window.api.hideRecordingWidget(); // Hide widget on failure
   if (recordTimerInterval) clearInterval(recordTimerInterval);
   if (vuMeterInterval) clearInterval(vuMeterInterval);
   if (canvasInterval) {
     clearInterval(canvasInterval);
     canvasInterval = null;
+  }
+}
+
+// --- LIVE WEBCAM & STREAM PLAYBACK HELPERS ---
+
+function updateWebcamUiPreviewStyle() {
+  if (!webcamUiPreviewContainer) return;
+  if (webcamShape === 'circle') {
+    webcamUiPreviewContainer.className = 'webcam-ui-preview-container shape-circle';
+  } else {
+    webcamUiPreviewContainer.className = 'webcam-ui-preview-container shape-rect';
+  }
+}
+
+function resumeAllActiveStreams() {
+  if (toggleCamera.checked && cameraStream) {
+    if (webcamUiPreviewEl && webcamUiPreviewEl.paused) {
+      webcamUiPreviewEl.play().catch(e => console.warn('Resuming UI preview failed:', e));
+    }
+    if (cameraVideoEl && cameraVideoEl.paused) {
+      cameraVideoEl.play().catch(e => console.warn('Resuming mixer camera failed:', e));
+    }
+  }
+  if (screenStream && screenVideoEl && screenVideoEl.paused) {
+    screenVideoEl.play().catch(e => console.warn('Resuming screen capture failed:', e));
   }
 }
 

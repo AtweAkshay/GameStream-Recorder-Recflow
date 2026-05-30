@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
+let floatingWidget = null;
 let activeRecordStream = null;
 
 function createWindow() {
@@ -204,5 +205,79 @@ ipcMain.handle('save-recording-history', (event, historyList) => {
   } catch (error) {
     console.error('Error saving recording history:', error);
     return false;
+  }
+});
+
+// --- FLOATING RECORDING WIDGET IPC HANDLERS ---
+
+ipcMain.handle('show-recording-widget', () => {
+  if (floatingWidget) return { success: true };
+  
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  
+  floatingWidget = new BrowserWindow({
+    width: 200,
+    height: 60,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    focusable: false, // Prevents taking focus away from games or browser windows
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+  
+  floatingWidget.loadFile('widget.html');
+  
+  // Position in bottom-left above the taskbar
+  floatingWidget.setPosition(20, height - 70);
+  
+  // CRITICAL: Exclude this widget from ALL screen recordings!
+  floatingWidget.setContentProtection(true);
+  
+  floatingWidget.on('closed', () => {
+    floatingWidget = null;
+  });
+  
+  return { success: true };
+});
+
+ipcMain.handle('hide-recording-widget', () => {
+  if (floatingWidget) {
+    floatingWidget.close();
+    floatingWidget = null;
+  }
+  return { success: true };
+});
+
+ipcMain.handle('update-widget-timer', (event, timeStr) => {
+  if (floatingWidget && !floatingWidget.isDestroyed()) {
+    floatingWidget.webContents.send('update-timer', timeStr);
+  }
+  return { success: true };
+});
+
+ipcMain.handle('update-widget-state', (event, state) => {
+  if (floatingWidget && !floatingWidget.isDestroyed()) {
+    floatingWidget.webContents.send('update-state', state);
+  }
+  return { success: true };
+});
+
+// Relay events clicked inside the widget directly back to the main app renderer
+ipcMain.on('stop-recording-clicked', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('stop-recording-from-widget');
+  }
+});
+
+ipcMain.on('pause-recording-clicked', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('pause-recording-from-widget');
   }
 });
