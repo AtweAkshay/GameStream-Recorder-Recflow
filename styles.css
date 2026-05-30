@@ -1079,8 +1079,8 @@ body {
   font-weight: 900;
   color: var(--color-purple);
   text-shadow: 0 0 30px var(--color-purple-glow);
-  transform: scale(0.6);
-  opacity: 0;
+  transform: scale(1);
+  opacity: 1; /* Fallback to fully visible if OS animations are disabled */
   animation: tick-scale 1s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 

@@ -62,7 +62,7 @@ const countdownNumber = document.getElementById('countdown-number');
 const screenVideoEl = document.getElementById('screen-video-element');
 const cameraVideoEl = document.getElementById('camera-video-element');
 const mixerCanvas = document.getElementById('mixer-canvas');
-const mixerCtx = mixerCanvas.getContext('2d', { alpha: false, desynchronized: true });
+const mixerCtx = mixerCanvas.getContext('2d');
 
 // UI Preview Webcam elements
 const webcamUiPreviewContainer = document.getElementById('webcam-ui-preview-container');
@@ -926,7 +926,6 @@ async function startRecording() {
     
     // We utilize the ultra-stable, built-in Chromium VP9/VP8 software encoders which are 100% guaranteed to work on all hardware configurations (unlike system H.264 which frequently fails to initialize on Windows GPU sandboxes).
     const candidates = [
-      'video/webm;codecs=h264,opus',
       'video/webm;codecs=vp8,opus',
       'video/webm;codecs=vp9,opus',
       'video/webm'
