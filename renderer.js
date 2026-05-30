@@ -7,6 +7,7 @@ const btnSelectFolder = document.getElementById('btn-select-folder');
 const toggleScreen = document.getElementById('toggle-screen');
 const btnSelectSource = document.getElementById('btn-select-source');
 const selectedSourcePreview = document.getElementById('selected-source-preview');
+const sourceOverlayLabel = document.getElementById('source-overlay-label');
 
 const toggleCamera = document.getElementById('toggle-camera');
 const selectCamera = document.getElementById('select-camera');
@@ -585,12 +586,40 @@ function selectSource(id, name, thumbnail) {
   activeScreenSourceName = name;
   activeScreenSourceThumb = thumbnail;
   
-  selectedSourcePreview.innerHTML = `
-    <img src="${thumbnail}" alt="${name}">
-    <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; background: rgba(0,0,0,0.7); border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      ${name}
-    </div>
-  `;
+  if (sourceOverlayLabel) {
+    sourceOverlayLabel.textContent = name;
+    sourceOverlayLabel.style.display = 'block';
+  }
+  
+  if (thumbnail && mixerCtx) {
+    const img = new Image();
+    img.onload = () => {
+      // Clear the canvas and draw the selected source's thumbnail
+      mixerCtx.fillStyle = '#08080c';
+      mixerCtx.fillRect(0, 0, mixerCanvas.width, mixerCanvas.height);
+      
+      const canvasWidth = mixerCanvas.width;
+      const canvasHeight = mixerCanvas.height;
+      const imgRatio = img.width / img.height;
+      const canvasRatio = canvasWidth / canvasHeight;
+      
+      let drawWidth = canvasWidth;
+      let drawHeight = canvasHeight;
+      let x = 0;
+      let y = 0;
+      
+      if (imgRatio > canvasRatio) {
+        drawHeight = canvasWidth / imgRatio;
+        y = (canvasHeight - drawHeight) / 2;
+      } else {
+        drawWidth = canvasHeight * imgRatio;
+        x = (canvasWidth - drawWidth) / 2;
+      }
+      
+      mixerCtx.drawImage(img, x, y, drawWidth, drawHeight);
+    };
+    img.src = thumbnail;
+  }
 }
 
 // --- MIC PRE-RECORDING MONITORING (VU TEST) ---
@@ -749,6 +778,11 @@ async function startRecording() {
     // Stop pre-recording mic monitor safely to release hardware
     stopMicMonitoring();
     
+    // Hide text overlay on capture start
+    if (sourceOverlayLabel) {
+      sourceOverlayLabel.style.display = 'none';
+    }
+    
     // Reset indicators
     isRecording = true;
     isPaused = false;
@@ -778,11 +812,8 @@ async function startRecording() {
           mandatory: {
             chromeMediaSource: 'desktop',
             chromeMediaSourceId: activeScreenSourceId,
-            minWidth: 1920,
             maxWidth: 1920,
-            minHeight: 1080,
             maxHeight: 1080,
-            minFrameRate: 60,
             maxFrameRate: 60
           }
         }
@@ -990,6 +1021,10 @@ async function startRecording() {
       recordingStatsContainer.style.display = 'none';
       statusDot.className = 'status-dot idle';
       
+      if (sourceOverlayLabel) {
+        sourceOverlayLabel.style.display = 'block';
+      }
+      
       // Reset VUs
       vuMicFill.style.width = '0%';
       vuSystemFill.style.width = '0%';
@@ -1067,6 +1102,9 @@ function resetUIOnFailure() {
   btnPause.style.display = 'none';
   recordingStatsContainer.style.display = 'none';
   statusDot.className = 'status-dot idle';
+  if (sourceOverlayLabel) {
+    sourceOverlayLabel.style.display = 'block';
+  }
   if (recordTimerInterval) clearInterval(recordTimerInterval);
   if (vuMeterInterval) clearInterval(vuMeterInterval);
   cancelAnimationFrame(canvasAnimFrame);
