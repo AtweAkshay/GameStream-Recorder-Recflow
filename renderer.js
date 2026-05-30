@@ -62,7 +62,7 @@ const countdownNumber = document.getElementById('countdown-number');
 const screenVideoEl = document.getElementById('screen-video-element');
 const cameraVideoEl = document.getElementById('camera-video-element');
 const mixerCanvas = document.getElementById('mixer-canvas');
-const mixerCtx = mixerCanvas.getContext('2d');
+const mixerCtx = mixerCanvas.getContext('2d', { alpha: false, desynchronized: true });
 
 // UI Preview Webcam elements
 const webcamUiPreviewContainer = document.getElementById('webcam-ui-preview-container');
@@ -926,8 +926,9 @@ async function startRecording() {
     
     // We utilize the ultra-stable, built-in Chromium VP9/VP8 software encoders which are 100% guaranteed to work on all hardware configurations (unlike system H.264 which frequently fails to initialize on Windows GPU sandboxes).
     const candidates = [
-      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=h264,opus',
       'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp9,opus',
       'video/webm'
     ];
     
@@ -959,9 +960,12 @@ async function startRecording() {
     mixerCtx.fillStyle = '#08080c';
     mixerCtx.fillRect(0, 0, mixerCanvas.width, mixerCanvas.height);
     
-    // 7. Initialize and start MediaRecorder with optimal mimeType
+    // 7. Initialize and start MediaRecorder with optimal mimeType and high bitrate
     console.log(`Starting MediaRecorder with mimeType: ${selectedMimeType}`);
-    mediaRecorder = new MediaRecorder(recordStream, { mimeType: selectedMimeType });
+    mediaRecorder = new MediaRecorder(recordStream, { 
+      mimeType: selectedMimeType,
+      videoBitsPerSecond: 15000000 // Pristine 15 Mbps gameplay bitrate!
+    });
     
     // Asynchronous error handler to alert the user if encoder initialization fails
     mediaRecorder.onerror = (e) => {
@@ -1180,6 +1184,7 @@ function resumeAllActiveStreams() {
 function startCanvasMixingLoop() {
   mixerCanvas.width = 1920;
   mixerCanvas.height = 1080;
+  mixerCtx.imageSmoothingEnabled = false; // Bypasses expensive bilinear scaling filters
   
   if (canvasInterval) {
     clearInterval(canvasInterval);
