@@ -865,33 +865,18 @@ async function startRecording() {
       recordStream.addTrack(mixedAudioTrack);
     }
     
-    // 6. Determine preferred format, supported mimeType, and file extension
+    // 6. Determine preferred format and appropriate file extension
     const formatVal = document.getElementById('select-format')?.value || 'mkv';
     console.log(`Preferred format selected by user: ${formatVal}`);
     
-    let candidates = [];
-    let ext = 'webm';
+    let ext = formatVal === 'mkv' ? 'mkv' : 'webm';
     
-    if (formatVal === 'mkv') {
-      ext = 'mkv';
-      candidates = [
-        'video/x-matroska;codecs=h264,opus',
-        'video/x-matroska;codecs=h264,pcm',
-        'video/x-matroska;codecs=h264',
-        'video/webm;codecs=h264,opus',
-        'video/webm;codecs=h264',
-        'video/x-matroska',
-        'video/webm'
-      ];
-    } else {
-      ext = 'webm';
-      candidates = [
-        'video/webm;codecs=vp9,opus',
-        'video/webm;codecs=vp8,opus',
-        'video/webm;codecs=h264,opus',
-        'video/webm'
-      ];
-    }
+    // We utilize the ultra-stable, built-in Chromium VP9/VP8 software encoders which are 100% guaranteed to work on all hardware configurations (unlike system H.264 which frequently fails to initialize on Windows GPU sandboxes).
+    const candidates = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm'
+    ];
     
     let selectedMimeType = '';
     for (const candidate of candidates) {
@@ -902,7 +887,7 @@ async function startRecording() {
     }
     
     if (!selectedMimeType) {
-      selectedMimeType = formatVal === 'mkv' ? 'video/x-matroska' : 'video/webm';
+      selectedMimeType = 'video/webm';
     }
     
     const timestampStr = new Date().toISOString().replace(/[:.]/g, '-');
@@ -920,6 +905,12 @@ async function startRecording() {
     // 7. Initialize and start MediaRecorder with optimal mimeType
     console.log(`Starting MediaRecorder with mimeType: ${selectedMimeType}`);
     mediaRecorder = new MediaRecorder(recordStream, { mimeType: selectedMimeType });
+    
+    // Asynchronous error handler to alert the user if encoder initialization fails
+    mediaRecorder.onerror = (e) => {
+      console.error('MediaRecorder asynchronous error:', e);
+      alert(`MediaRecorder error: ${e.error ? e.error.message : e.message || 'Failed to encode recording.'}`);
+    };
     
     mediaRecorder.ondataavailable = async (event) => {
       if (event.data && event.data.size > 0) {
