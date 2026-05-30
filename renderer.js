@@ -295,9 +295,14 @@ function renderHistory() {
 }
 
 function playVideoInApp(item) {
-  playerTitle.textContent = item.filename;
-  previewVideo.src = `file:///${item.filePath.replace(/\\/g, '/')}`;
-  modalPlayer.style.display = 'flex';
+  if (item.filename.toLowerCase().endsWith('.mkv')) {
+    // Matroska (.mkv) container is not natively supported for playing in Chromium <video> tag, so we open in default system player
+    window.api.playFile(item.filePath);
+  } else {
+    playerTitle.textContent = item.filename;
+    previewVideo.src = `file:///${item.filePath.replace(/\\/g, '/')}`;
+    modalPlayer.style.display = 'flex';
+  }
 }
 
 // --- EVENT LISTENERS REGISTRATION ---
@@ -860,17 +865,33 @@ async function startRecording() {
       recordStream.addTrack(mixedAudioTrack);
     }
     
-    // 6. Determine supported mimeType and appropriate file extension for recording
-    const candidates = [
-      'video/mp4;codecs=h264,aac',
-      'video/mp4;codecs=h264,opus',
-      'video/mp4;codecs=h264',
-      'video/mp4',
-      'video/webm;codecs=h264,opus',
-      'video/webm;codecs=h264',
-      'video/webm;codecs=vp9,opus',
-      'video/webm'
-    ];
+    // 6. Determine preferred format, supported mimeType, and file extension
+    const formatVal = document.getElementById('select-format')?.value || 'mkv';
+    console.log(`Preferred format selected by user: ${formatVal}`);
+    
+    let candidates = [];
+    let ext = 'webm';
+    
+    if (formatVal === 'mkv') {
+      ext = 'mkv';
+      candidates = [
+        'video/x-matroska;codecs=h264,opus',
+        'video/x-matroska;codecs=h264,pcm',
+        'video/x-matroska;codecs=h264',
+        'video/webm;codecs=h264,opus',
+        'video/webm;codecs=h264',
+        'video/x-matroska',
+        'video/webm'
+      ];
+    } else {
+      ext = 'webm';
+      candidates = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=h264,opus',
+        'video/webm'
+      ];
+    }
     
     let selectedMimeType = '';
     for (const candidate of candidates) {
@@ -881,12 +902,7 @@ async function startRecording() {
     }
     
     if (!selectedMimeType) {
-      selectedMimeType = 'video/webm';
-    }
-    
-    let ext = 'webm';
-    if (selectedMimeType.startsWith('video/mp4')) {
-      ext = 'mp4';
+      selectedMimeType = formatVal === 'mkv' ? 'video/x-matroska' : 'video/webm';
     }
     
     const timestampStr = new Date().toISOString().replace(/[:.]/g, '-');

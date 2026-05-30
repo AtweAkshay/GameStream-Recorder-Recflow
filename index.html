@@ -57,7 +57,16 @@
               <div class="selected-source-preview" id="selected-source-preview">
                 <div class="no-source">No Screen Selected</div>
               </div>
-              <button class="btn-primary-glow btn-sm" id="btn-select-source">
+              
+              <div class="format-selection-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px;">
+                <span style="font-size: 0.75rem; color: var(--color-text-secondary); font-weight: 500;">Format</span>
+                <select class="custom-select" id="select-format" style="width: auto; min-width: 150px; padding: 6px 10px;">
+                  <option value="mkv" selected>MKV (Windows Compatible)</option>
+                  <option value="webm">WebM (VP9 Codec)</option>
+                </select>
+              </div>
+
+              <button class="btn-primary-glow btn-sm" id="btn-select-source" style="margin-top: 4px;">
                 Choose Screen / Window
               </button>
             </div>
