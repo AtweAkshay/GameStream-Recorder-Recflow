@@ -902,6 +902,10 @@ async function startRecording() {
       throw new Error(`Failed to initialize local file: ${fileResult.error}`);
     }
     
+    // Draw initial blank frame on canvas to warm up capture stream layout parameters (prevents empty video tracks)
+    mixerCtx.fillStyle = '#08080c';
+    mixerCtx.fillRect(0, 0, mixerCanvas.width, mixerCanvas.height);
+    
     // 7. Initialize and start MediaRecorder with optimal mimeType
     console.log(`Starting MediaRecorder with mimeType: ${selectedMimeType}`);
     mediaRecorder = new MediaRecorder(recordStream, { mimeType: selectedMimeType });
